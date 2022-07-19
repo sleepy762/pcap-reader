@@ -4,10 +4,14 @@
 #include <string>
 #include <cstdint>
 
+#define MICROSECONDS_MAGIC (0xA1B2C3D4)
+#define NANOSECONDS_MAGIC (0xA1B23C4D)
+
 class PCAP
 {
 public:
     PCAP(const char* path);
+    PCAP();
     ~PCAP();
 
     // (Re)Sets all the private members
@@ -32,4 +36,7 @@ private:
     uint32_t m_LinkType;
     uint8_t m_FCS;
     std::vector<Packet> m_Packets;
+
+    void ParsePcapHeader(const std::vector<uint8_t>& pcapBytes, uint32_t& pcapFilePos);
+    void ParsePackets(const std::vector<uint8_t>& pcapBytes, uint32_t& pcapFilePos);
 };

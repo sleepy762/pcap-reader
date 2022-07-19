@@ -2,9 +2,22 @@
 #include <fstream>
 #include "byteconverter.h"
 
+#define PCAP_HEADER_SIZE (24)
+
 PCAP::PCAP(const char* path)
 {
     this->ReadPcapFile(path);
+}
+
+PCAP::PCAP()
+{
+    this->m_pcapFile = "";
+    this->m_Magic = 0;
+    this->m_MajorVersion = 0;
+    this->m_MinorVersion = 0;
+    this->m_SnapLen = 0;
+    this->m_LinkType = 0;
+    this->m_FCS = 0;
 }
 
 PCAP::~PCAP() {}
@@ -16,8 +29,19 @@ void PCAP::ReadPcapFile(const char* path)
     std::vector<uint8_t> pcapBytes((std::istreambuf_iterator<char>(pcap)), std::istreambuf_iterator<char>());
     uint32_t pcapFilePos = 0;
 
+    this->ParsePcapHeader(pcapBytes, pcapFilePos);
+    this->ParsePackets(pcapBytes, pcapFilePos);
+}
+
+void PCAP::ParsePcapHeader(const std::vector<uint8_t>& pcapBytes, uint32_t& pcapFilePos)
+{
     // Get the magic number at the first 4 bytes of the pcap file
     this->m_Magic = BytesToInteger<uint32_t>(pcapBytes, pcapFilePos);
+    // Make sure the magic is valid
+    if (this->m_Magic != MICROSECONDS_MAGIC && this->m_Magic != NANOSECONDS_MAGIC)
+    {
+        throw std::runtime_error("Invalid PCAP magic.");
+    }
     pcapFilePos += sizeof(uint32_t);
 
     // Get the version numbers
@@ -38,7 +62,25 @@ void PCAP::ReadPcapFile(const char* path)
 
     // Get the FCS
     this->m_FCS = BytesToInteger<uint8_t>(pcapBytes, pcapFilePos);
-    this->m_FCS >>= 4;
+    this->m_FCS >>= 4; // The FCS is 4 bits long
+
+    // Go to the beginning of the first packet
+    pcapFilePos += sizeof(uint32_t);
+}
+
+void PCAP::ParsePackets(const std::vector<uint8_t>& pcapBytes, uint32_t& pcapFilePos)
+{
+    if (pcapFilePos < PCAP_HEADER_SIZE)
+    {
+        throw std::runtime_error("PCAP header was not parsed properly.");
+    }
+
+    while (pcapFilePos < pcapBytes.size())
+    {
+        Packet packet;
+        packet.ParsePacket(pcapBytes, pcapFilePos);
+        this->m_Packets.push_back(packet);
+    }
 }
 
 const std::string& PCAP::GetPcapFile() const

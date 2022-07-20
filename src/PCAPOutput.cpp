@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <cctype>
 
+#define CLEAR_SCREEN ("\033[2J\033[1;1H")
+
 using std::cout;
 
 PCAPOutput::PCAPOutput(const PCAP& pcap, uint32_t dataLineSize)

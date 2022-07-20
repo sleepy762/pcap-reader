@@ -11,10 +11,11 @@ int main(int argc, char** argv)
     int32_t packetIndex = 0;
     bool packetIndexSet = false;
     bool interactiveMode = false;
+    bool omitPcapHeader = false;
     std::string pcapFilePath = "";
 
     int opt;
-    while ((opt = getopt(argc, argv, "f:d:n:i")) != -1)
+    while ((opt = getopt(argc, argv, "f:d:n:ih")) != -1)
     {
         switch (opt)
         {
@@ -62,6 +63,10 @@ int main(int argc, char** argv)
                 interactiveMode = true;
                 break;
 
+            case 'h':
+                omitPcapHeader = true;
+                break;
+
             case -1:
                 break;
         }
@@ -85,22 +90,32 @@ int main(int argc, char** argv)
     }
 
     PCAPOutput out(pcap, dataLineSize);
-    out.PrintPcapHeader();
-
-    if (packetIndexSet)
+    if (interactiveMode)
     {
-        try
-        {
-            out.PrintPacket(packetIndex);
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
-        }
+
     }
     else
     {
-        std::cout << "Specify a packet to print with the -n flag, or open in interactive mode with -i.\n";
+        if (!omitPcapHeader)
+        {
+            out.PrintPcapHeader();
+        }
+
+        if (packetIndexSet)
+        {
+            try
+            {
+                out.PrintPacket(packetIndex);
+            }
+            catch(const std::exception& e)
+            {
+                std::cerr << e.what() << '\n';
+            }
+        }
+        else
+        {
+            std::cout << "Specify a packet to print with the -n flag, or open in interactive mode with -i.\n";
+        }
     }
 
     return 0;
@@ -108,11 +123,12 @@ int main(int argc, char** argv)
 
 void PrintAvailableFlags()
 {
-    std::cerr << "Required flags:\n\t";
-    std::cerr << "-f <pcap> -- Specify the path to a pcap file to read.\n";
+    std::cout << "Required flags:\n\t";
+    std::cout << "-f <pcap> -- Specify the path to a pcap file to read.\n";
 
-    std::cerr << "Optional flags:\n\t";
-    std::cerr << "-d <size> -- Sets the size of the rows when printing packet data.\n\t";
-    std::cerr << "-n <index> -- Start from/print a specific packet at the given index.\n\t";
-    std::cerr << "-i -- Open the reader in interactive mode.\n";
+    std::cout << "Optional flags:\n\t";
+    std::cout << "-d <size> -- Sets the size of the rows when printing packet data.\n\t";
+    std::cout << "-n <index> -- Start from/print a specific packet at the given index.\n\t";
+    std::cout << "-i -- Open the reader in interactive mode.\n\t";
+    std::cout << "-h -- Don't print the pcap header.\n";
 }

@@ -3,12 +3,72 @@
 #include <iostream>
 #include <unistd.h>
 
+void PrintAvailableFlags();
+
 int main(int argc, char** argv)
 {
-    if (argc < 2)
+    int32_t dataLineSize = 16; // Default size
+    int32_t packetIndex = 0;
+    bool packetIndexSet = false;
+    bool interactiveMode = false;
+    std::string pcapFilePath = "";
+
+    int opt;
+    while ((opt = getopt(argc, argv, "f:d:n:i")) != -1)
     {
-        std::cerr << "Usage: " << *argv << " <PCAP file> [Packet index]\n";
-        std::cerr << "Flags:\n-d <size> -- Sets the size of the rows when printing packet data.\n";
+        switch (opt)
+        {
+            case 'f':
+                pcapFilePath = optarg;
+                break;
+
+            case 'd':
+            {
+                int32_t newSize = 0;
+                try
+                {
+                    newSize = std::stoi(optarg);
+                }
+                catch(const std::exception& e)
+                {
+                    std::cerr << *argv << ": Invalid -d argument.\n";
+                    break;
+                }
+                
+                if (newSize < 1)
+                {
+                    std::cerr << *argv << ": -d argument cannot be smaller than 1.\n";
+                }
+                else
+                {
+                    dataLineSize = newSize;
+                }
+                break;
+            }
+
+            case 'n':
+                try
+                {
+                    packetIndex = std::stoi(optarg);
+                    packetIndexSet = true;
+                }
+                catch(const std::exception& e)
+                {
+                    std::cerr << *argv << ": Invalid -n argument.\n";
+                }
+                break;
+
+            case 'i':
+                interactiveMode = true;
+                break;
+
+            case -1:
+                break;
+        }
+    }
+    if (pcapFilePath == "")
+    {
+        PrintAvailableFlags();    
         return 1;
     }
 
@@ -16,7 +76,7 @@ int main(int argc, char** argv)
     PCAP pcap;
     try
     {
-        pcap.ReadPcapFile(argv[1]);
+        pcap.ReadPcapFile(pcapFilePath);
     }
     catch(const std::exception& e)
     {
@@ -24,45 +84,35 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    uint32_t dataLineSize = 16; // Default size
-    switch (getopt(argc, argv, "d:"))
-    {
-        case 'd':
-        {
-            uint32_t newSize = std::stoi(optarg);
-            if (newSize < 1)
-            {
-                std::cerr << "-d argument cannot be smaller than 1.\n";
-            }
-            else
-            {
-                dataLineSize = newSize;
-            }
-            break;
-        }
-
-        case -1:
-            break;
-    }
-
     PCAPOutput out(pcap, dataLineSize);
     out.PrintPcapHeader();
 
-    if (argc < 3)
-    {
-        std::cerr << "Specify a packet index to view a packet.\n";
-    }
-    else
+    if (packetIndexSet)
     {
         try
         {
-            out.PrintPacket(std::stoi(argv[2]));
+            out.PrintPacket(packetIndex);
         }
         catch(const std::exception& e)
         {
             std::cerr << e.what() << '\n';
         }
     }
+    else
+    {
+        std::cout << "Specify a packet to print with the -n flag, or open in interactive mode with -i.\n";
+    }
 
     return 0;
+}
+
+void PrintAvailableFlags()
+{
+    std::cerr << "Required flags:\n\t";
+    std::cerr << "-f <pcap> -- Specify the path to a pcap file to read.\n";
+
+    std::cerr << "Optional flags:\n\t";
+    std::cerr << "-d <size> -- Sets the size of the rows when printing packet data.\n\t";
+    std::cerr << "-n <index> -- Start from/print a specific packet at the given index.\n\t";
+    std::cerr << "-i -- Open the reader in interactive mode.\n";
 }

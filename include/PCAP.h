@@ -11,15 +11,15 @@
 class PCAP
 {
 public:
-    PCAP(const char* path);
+    PCAP(std::string path);
     PCAP();
     ~PCAP();
 
     // (Re)Sets all the private members
-    void ReadPcapFile(const char* path);
+    void ReadPcapFile(std::string path);
 
     // Getters
-    const std::string& GetPcapFile() const;
+    const std::string& GetPcapFilePath() const;
     uint32_t GetMagic() const;
     uint16_t GetMajorVersion() const;
     uint16_t GetMinorVersion() const;
@@ -29,7 +29,7 @@ public:
     const std::vector<Packet>& GetPackets() const;
 
 private:
-    std::string m_pcapFile;
+    std::string m_pcapFilePath;
     uint32_t m_Magic;
     uint16_t m_MajorVersion;
     uint16_t m_MinorVersion;

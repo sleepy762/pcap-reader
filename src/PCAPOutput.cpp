@@ -19,6 +19,7 @@ PCAPOutput::~PCAPOutput() {}
 void PCAPOutput::PrintPcapHeader() const
 {
     cout << "== PCAP HEADER ==\n";
+    cout << "PCAP path: " << this->m_PCAP.GetPcapFilePath() << '\n';
     cout << "Magic: 0x" << std::hex << this->m_PCAP.GetMagic() << std::dec << '\n';
     cout << "PCAP format version: " << this->m_PCAP.GetMajorVersion() << '.' 
         << this->m_PCAP.GetMinorVersion()<< '\n';

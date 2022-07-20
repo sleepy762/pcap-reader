@@ -4,14 +4,14 @@
 
 #define PCAP_HEADER_SIZE (24)
 
-PCAP::PCAP(const char* path)
+PCAP::PCAP(std::string path)
 {
     this->ReadPcapFile(path);
 }
 
 PCAP::PCAP()
 {
-    this->m_pcapFile = "";
+    this->m_pcapFilePath = "";
     this->m_Magic = 0;
     this->m_MajorVersion = 0;
     this->m_MinorVersion = 0;
@@ -22,7 +22,7 @@ PCAP::PCAP()
 
 PCAP::~PCAP() {}
 
-void PCAP::ReadPcapFile(const char* path)
+void PCAP::ReadPcapFile(std::string path)
 {
     // Open the pcap file and read all of it into a vector of bytes
     std::ifstream pcap(path, std::ios::binary);
@@ -30,6 +30,7 @@ void PCAP::ReadPcapFile(const char* path)
     {
         throw std::runtime_error("Failed to open file.");
     }
+    this->m_pcapFilePath = path;
 
     std::vector<uint8_t> pcapBytes((std::istreambuf_iterator<char>(pcap)), std::istreambuf_iterator<char>());
     uint32_t pcapFilePos = 0;
@@ -88,9 +89,9 @@ void PCAP::ParsePackets(const std::vector<uint8_t>& pcapBytes, uint32_t& pcapFil
     }
 }
 
-const std::string& PCAP::GetPcapFile() const
+const std::string& PCAP::GetPcapFilePath() const
 {
-    return this->m_pcapFile;
+    return this->m_pcapFilePath;
 }
 
 uint32_t PCAP::GetMagic() const

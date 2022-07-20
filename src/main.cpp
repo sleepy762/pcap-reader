@@ -1,12 +1,14 @@
 #include "PCAP.h"
 #include "PCAPOutput.h"
 #include <iostream>
+#include <unistd.h>
 
 int main(int argc, char** argv)
 {
     if (argc < 2)
     {
         std::cerr << "Usage: " << *argv << " <PCAP file> [Packet index]\n";
+        std::cerr << "Flags:\n-d <size> -- Sets the size of the rows when printing packet data.\n";
         return 1;
     }
 
@@ -22,12 +24,33 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    PCAPOutput out(pcap);
+    uint32_t dataLineSize = 16; // Default size
+    switch (getopt(argc, argv, "d:"))
+    {
+        case 'd':
+        {
+            uint32_t newSize = std::stoi(optarg);
+            if (newSize < 1)
+            {
+                std::cerr << "-d argument cannot be smaller than 1.\n";
+            }
+            else
+            {
+                dataLineSize = newSize;
+            }
+            break;
+        }
+
+        case -1:
+            break;
+    }
+
+    PCAPOutput out(pcap, dataLineSize);
     out.PrintPcapHeader();
 
     if (argc < 3)
     {
-        std::cerr << "Specify a packet index to view a packet." << '\n';
+        std::cerr << "Specify a packet index to view a packet.\n";
     }
     else
     {

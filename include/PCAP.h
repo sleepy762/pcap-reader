@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdint>
 
+// a PCAP file must have one of these two magic numbers
 #define MICROSECONDS_MAGIC (0xA1B2C3D4)
 #define NANOSECONDS_MAGIC (0xA1B23C4D)
 

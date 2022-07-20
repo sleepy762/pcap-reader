@@ -26,6 +26,11 @@ void PCAP::ReadPcapFile(const char* path)
 {
     // Open the pcap file and read all of it into a vector of bytes
     std::ifstream pcap(path, std::ios::binary);
+    if (!pcap.is_open())
+    {
+        throw std::runtime_error("Failed to open file.");
+    }
+
     std::vector<uint8_t> pcapBytes((std::istreambuf_iterator<char>(pcap)), std::istreambuf_iterator<char>());
     uint32_t pcapFilePos = 0;
 

@@ -2,19 +2,23 @@
 #include <iostream>
 #include <stdexcept>
 #include <iomanip>
+#include <cctype>
 
 using std::cout;
 
-PCAPOutput::PCAPOutput(const PCAP& pcap)
+PCAPOutput::PCAPOutput(const PCAP& pcap, uint32_t dataLineSize)
     : m_PCAP(pcap), 
     m_FirstPacketSeconds(pcap.GetPackets()[0].GetTimestampSeconds()),
-    m_FirstPacketFractions(pcap.GetPackets()[0].GetTimestampFractions()) {}
+    m_FirstPacketFractions(pcap.GetPackets()[0].GetTimestampFractions()) 
+{
+    this->m_DataLineSize = dataLineSize;
+}
 
 PCAPOutput::~PCAPOutput() {}
 
 void PCAPOutput::PrintPcapHeader() const
 {
-    cout << "== PCAP HEADER ==" << '\n';
+    cout << "== PCAP HEADER ==\n";
     cout << "Magic: 0x" << std::hex << this->m_PCAP.GetMagic() << std::dec << '\n';
     cout << "PCAP format version: " << this->m_PCAP.GetMajorVersion() << '.' 
         << this->m_PCAP.GetMinorVersion()<< '\n';
@@ -63,4 +67,38 @@ void PCAPOutput::PrintPacket(uint32_t index) const
 
     cout << "Captured packet size: " << packet.GetCapturedLen() << '\n';
     cout << "Original packet size: " << packet.GetOriginalLen() << '\n';
+
+    this->PrintPacketData(packet);
+}
+
+void PCAPOutput::PrintPacketData(const Packet& p) const
+{
+    cout << "Packet data:\n";
+
+    auto data = p.GetData();
+    for (uint32_t i = 0; i < data.size(); i += this->m_DataLineSize)
+    {
+        std::string printableData = "";
+        cout << std::setfill('0') << std::setw(4) << std::hex << i << ": ";
+        for (uint8_t j = 0; j < this->m_DataLineSize; j++)
+        {
+            // Avoid going out of bounds
+            if (i + j >= data.size())
+            {
+                // Add padding if the last line is shorter
+                for (uint8_t k = 0; k < this->m_DataLineSize - j; k++)
+                {
+                    cout << "   ";
+                }
+                break;
+            }
+
+            int c = data[i + j]; // Read a byte from the data
+            cout << std::setfill('0') << std::setw(2) << c << ' '; // Output in hex
+
+            // Save ASCII character, if it's printable
+            printableData += std::isprint(c) ? c : '.';
+        }
+        cout << '|' << printableData << "|\n";
+    }
 }

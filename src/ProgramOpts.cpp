@@ -9,6 +9,7 @@ ProgramOpts::ProgramOpts()
     this->m_PacketIndex = 0;
     this->m_PacketIndexSetFlag = false;
     this->m_PcapPath = "";
+    this->m_RawDataMode = false;
 }
 
 ProgramOpts::~ProgramOpts() {}

@@ -1,77 +1,16 @@
 #include "PCAP.h"
 #include "PCAPOutput.h"
+#include "ProgramOpts.h"
 #include <iostream>
 #include <unistd.h>
 
+ProgramOpts ParseProgramOptions(int argc, char** argv);
 void PrintAvailableFlags();
 
 int main(int argc, char** argv)
 {
-    int32_t dataLineSize = 16; // Default size
-    int32_t packetIndex = 0;
-    bool packetIndexSet = false;
-    bool interactiveMode = false;
-    bool omitPcapHeader = false;
-    std::string pcapFilePath = "";
-
-    int opt;
-    while ((opt = getopt(argc, argv, "f:d:n:ih")) != -1)
-    {
-        switch (opt)
-        {
-            case 'f':
-                pcapFilePath = optarg;
-                break;
-
-            case 'd':
-            {
-                int32_t newSize = 0;
-                try
-                {
-                    newSize = std::stoi(optarg);
-                }
-                catch(const std::exception& e)
-                {
-                    std::cerr << *argv << ": Invalid -d argument.\n";
-                    break;
-                }
-                
-                if (newSize < 1)
-                {
-                    std::cerr << *argv << ": -d argument cannot be smaller than 1.\n";
-                }
-                else
-                {
-                    dataLineSize = newSize;
-                }
-                break;
-            }
-
-            case 'n':
-                try
-                {
-                    packetIndex = std::stoi(optarg);
-                    packetIndexSet = true;
-                }
-                catch(const std::exception& e)
-                {
-                    std::cerr << *argv << ": Invalid -n argument.\n";
-                }
-                break;
-
-            case 'i':
-                interactiveMode = true;
-                break;
-
-            case 'h':
-                omitPcapHeader = true;
-                break;
-
-            case -1:
-                break;
-        }
-    }
-    if (pcapFilePath == "")
+    ProgramOpts opts = ParseProgramOptions(argc, argv);
+    if (opts.GetPcapPath() == "") // Pcap path is a required argument
     {
         PrintAvailableFlags();    
         return 1;
@@ -81,7 +20,7 @@ int main(int argc, char** argv)
     PCAP pcap;
     try
     {
-        pcap.ReadPcapFile(pcapFilePath);
+        pcap.ReadPcapFile(opts.GetPcapPath());
     }
     catch(const std::exception& e)
     {
@@ -89,36 +28,66 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    PCAPOutput out(pcap, dataLineSize);
-    if (interactiveMode)
+    PCAPOutput out(pcap, opts);
+    try
     {
-
+        out.StartOutput();
     }
-    else
+    catch(const std::exception& e)
     {
-        if (!omitPcapHeader)
-        {
-            out.PrintPcapHeader();
-        }
-
-        if (packetIndexSet)
-        {
-            try
-            {
-                out.PrintPacket(packetIndex);
-            }
-            catch(const std::exception& e)
-            {
-                std::cerr << e.what() << '\n';
-            }
-        }
-        else
-        {
-            std::cout << "Specify a packet to print with the -n flag, or open in interactive mode with -i.\n";
-        }
+        std::cerr << e.what() << '\n';
     }
 
     return 0;
+}
+
+ProgramOpts ParseProgramOptions(int argc, char** argv)
+{
+    ProgramOpts opts;
+    int opt;
+    while ((opt = getopt(argc, argv, "f:d:n:ih")) != -1)
+    {
+        switch (opt)
+        {
+            case 'f':
+                opts.SetPcapPath(optarg);
+                break;
+
+            case 'd':
+                try
+                {
+                    opts.SetDataLineSize(std::stoi(optarg));
+                }
+                catch(const std::exception& e)
+                {
+                    std::cerr << *argv << ": Invalid -d argument: " << e.what() << '\n';
+                }
+                break;
+
+            case 'n':
+                try
+                {
+                    opts.SetPacketIndex(std::stoi(optarg));
+                }
+                catch(const std::exception& e)
+                {
+                    std::cerr << *argv << ": Invalid -n argument: " << e.what() << '\n';
+                }
+                break;
+
+            case 'i':
+                opts.SetInteractiveMode(true);
+                break;
+
+            case 'h':
+                opts.SetOmitPcapHeader(true);
+                break;
+
+            case -1:
+                break;
+        }
+    }
+    return opts;
 }
 
 void PrintAvailableFlags()

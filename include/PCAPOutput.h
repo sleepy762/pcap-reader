@@ -1,22 +1,25 @@
 #pragma once
 #include "PCAP.h"
+#include "ProgramOpts.h"
 
 class PCAPOutput
 {
 public:
-    PCAPOutput(const PCAP& pcap, uint32_t dataLineSize);
+    PCAPOutput(const PCAP& pcap, ProgramOpts& opts);
     ~PCAPOutput();
 
     void PrintPcapHeader() const;
-    void PrintPacket(uint32_t index) const;
+    void PrintPacket() const;
     void PrintPacketData(const Packet& p) const;
 
-    void InteractiveMode(bool packetIndexSet, int32_t packetIndex, bool omitPcapHeader) const;
-    void NonInteractiveMode(bool packetIndexSet, int32_t packetIndex, bool omitPcapHeader) const;
+    void StartOutput() const;
 
 private:
+    void InteractiveMode() const;
+    void NonInteractiveMode() const;
+
     const PCAP& m_PCAP;
+    ProgramOpts& m_Opts;
     const uint32_t m_FirstPacketSeconds;
     const uint32_t m_FirstPacketFractions;
-    uint32_t m_DataLineSize;
 };

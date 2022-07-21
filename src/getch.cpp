@@ -10,7 +10,7 @@ char getch()
     struct termios old = {};
     fflush(stdout);
     if(tcgetattr(0, &old) < 0)
-        perror("tcsetattr()");
+        perror("tcgetattr()");
     old.c_lflag &= ~ICANON;
     old.c_lflag &= ~ECHO;
     old.c_cc[VMIN] = 1;

@@ -5,7 +5,7 @@
 template <typename T>
 T BytesToInteger(const std::vector<uint8_t>& data, uint32_t offset)
 {
-    if (offset > data.size())
+    if (offset >= data.size())
     {
         throw std::runtime_error("Offset is greater than data size.");
     }

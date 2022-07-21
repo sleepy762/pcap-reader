@@ -24,7 +24,7 @@ PCAPOutput::~PCAPOutput() {}
 void PCAPOutput::PrintPcapHeader() const
 {
     // Don't print the pcap header if the omit flag is set
-    if (this->m_Opts.GetOmitHeaderFlag())
+    if (this->m_Opts.GetOmitHeadersFlag())
     {
         return;
     }
@@ -40,27 +40,8 @@ void PCAPOutput::PrintPcapHeader() const
     cout << "Packets number: " << this->m_PCAP.GetPackets().size() << "\n\n";
 }
 
-void PCAPOutput::PrintPacket() const
+void PCAPOutput::PrintPacketHeader(const Packet& packet, const unsigned int index) const
 {
-    unsigned int index = 0;
-    if (!this->m_Opts.GetPacketIndexSetFlag() && !this->m_Opts.GetInteractiveModeFlag())
-    {
-        cout << "Specify a packet to print with the -n flag, or open in interactive mode with -i.\n";
-        return;
-    }
-    else
-    {
-        index = this->m_Opts.GetPacketIndex();
-    }
-
-    auto packetVector = this->m_PCAP.GetPackets();
-    if (index >= packetVector.size())
-    {
-        throw std::runtime_error("Packet index out of range.");
-    }
-
-    Packet packet = packetVector[index];
-
     uint32_t pcapMagic = this->m_PCAP.GetMagic();
     int32_t relativeSeconds = packet.GetTimestampSeconds() - this->m_FirstPacketSeconds;
     int32_t relativeFractions = packet.GetTimestampFractions() - this->m_FirstPacketFractions;
@@ -90,11 +71,55 @@ void PCAPOutput::PrintPacket() const
 
     cout << "Captured packet size: " << packet.GetCapturedLen() << '\n';
     cout << "Original packet size: " << packet.GetOriginalLen() << '\n';
-
-    this->PrintPacketData(packet);
 }
 
-void PCAPOutput::PrintPacketData(const Packet& p) const
+void PCAPOutput::PrintPacket() const
+{
+    unsigned int index = 0;
+    if (!this->m_Opts.GetPacketIndexSetFlag() && !this->m_Opts.GetInteractiveModeFlag())
+    {
+        cout << "Specify a packet to print with the -n flag, or open in interactive mode with -i.\n";
+        return;
+    }
+    else
+    {
+        index = this->m_Opts.GetPacketIndex();
+    }
+
+    auto packetVector = this->m_PCAP.GetPackets();
+    if (index >= packetVector.size())
+    {
+        throw std::runtime_error("Packet index out of range.");
+    }
+
+    Packet packet = packetVector[index];
+
+    if (!this->m_Opts.GetOmitHeadersFlag())
+    {
+        this->PrintPacketHeader(packet, index);
+    }
+
+    if (this->m_Opts.GetRawDataModeFlag())
+    {
+        this->PrintPacketDataRaw(packet);
+    }
+    else
+    {
+        this->PrintPacketDataFormatted(packet);
+    }
+}
+
+void PCAPOutput::PrintPacketDataRaw(const Packet& packet) const
+{
+    auto data = packet.GetData();
+    for (size_t i = 0; i < data.size(); i++)
+    {
+        std::cout << data[i];
+    }
+    std::cout << std::endl;
+}
+
+void PCAPOutput::PrintPacketDataFormatted(const Packet& packet) const
 {
     const int dataLineSize = this->m_Opts.GetDataLineSize();
     if (dataLineSize < 1)
@@ -104,7 +129,7 @@ void PCAPOutput::PrintPacketData(const Packet& p) const
 
     cout << "Packet data:\n";
 
-    auto data = p.GetData();
+    auto data = packet.GetData();
     for (uint32_t i = 0; i < data.size(); i += dataLineSize)
     {
         std::string printableData = "";
@@ -168,7 +193,7 @@ void PCAPOutput::InteractiveMode() const
                 break;
 
             case INTERACTIVE_BACKWARD_KEY:
-                if (currentIndex - 1 > 0)
+                if (currentIndex - 1 >= 0)
                 {
                     this->m_Opts.SetPacketIndex(currentIndex - 1);
                 }

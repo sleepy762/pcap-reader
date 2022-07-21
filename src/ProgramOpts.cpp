@@ -5,7 +5,7 @@ ProgramOpts::ProgramOpts()
 {
     this->m_DataLineSize = 16; // Default value
     this->m_InteractiveMode = false;
-    this->m_OmitPcapHeader = false;
+    this->m_OmitHeadersFlag = false;
     this->m_PacketIndex = 0;
     this->m_PacketIndexSetFlag = false;
     this->m_PcapPath = "";
@@ -43,9 +43,14 @@ void ProgramOpts::SetInteractiveMode(const bool setting)
     this->m_InteractiveMode = setting;
 }
 
-void ProgramOpts::SetOmitPcapHeader(const bool setting)
+void ProgramOpts::SetOmitHeadersFlag(const bool setting)
 {
-    this->m_OmitPcapHeader = setting;
+    this->m_OmitHeadersFlag = setting;
+}
+
+void ProgramOpts::SetRawDataMode(const bool setting)
+{
+    this->m_RawDataMode = setting;
 }
 
 // Getters
@@ -74,7 +79,12 @@ bool ProgramOpts::GetInteractiveModeFlag() const
     return this->m_InteractiveMode;
 }
 
-bool ProgramOpts::GetOmitHeaderFlag() const
+bool ProgramOpts::GetOmitHeadersFlag() const
 {
-    return this->m_OmitPcapHeader;
+    return this->m_OmitHeadersFlag;
+}
+
+bool ProgramOpts::GetRawDataModeFlag() const
+{
+    return this->m_RawDataMode;
 }

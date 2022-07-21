@@ -9,8 +9,10 @@ public:
     ~PCAPOutput();
 
     void PrintPcapHeader() const;
+    void PrintPacketHeader(const Packet& packet, const unsigned int index) const;
     void PrintPacket() const;
-    void PrintPacketData(const Packet& p) const;
+    void PrintPacketDataFormatted(const Packet& packet) const;
+    void PrintPacketDataRaw(const Packet& packet) const;
 
     void StartOutput() const;
 

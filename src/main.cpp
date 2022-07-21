@@ -45,7 +45,7 @@ ProgramOpts ParseProgramOptions(int argc, char** argv)
 {
     ProgramOpts opts;
     int opt;
-    while ((opt = getopt(argc, argv, "f:d:n:ih")) != -1)
+    while ((opt = getopt(argc, argv, "f:d:n:ihr")) != -1)
     {
         switch (opt)
         {
@@ -80,7 +80,11 @@ ProgramOpts ParseProgramOptions(int argc, char** argv)
                 break;
 
             case 'h':
-                opts.SetOmitPcapHeader(true);
+                opts.SetOmitHeadersFlag(true);
+                break;
+            
+            case 'r':
+                opts.SetRawDataMode(true);
                 break;
 
             case -1:
@@ -99,5 +103,6 @@ void PrintAvailableFlags()
     std::cout << "-d <size> -- Sets the size of the rows when printing packet data.\n\t";
     std::cout << "-n <index> -- Start from/print a specific packet at the given index.\n\t";
     std::cout << "-i -- Open the reader in interactive mode.\n\t";
-    std::cout << "-h -- Don't print the pcap header.\n";
+    std::cout << "-h -- Don't print the pcap and packet headers.\n\t";
+    std::cout << "-r -- Print packet data in raw format.\n";
 }

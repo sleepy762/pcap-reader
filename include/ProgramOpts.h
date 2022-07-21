@@ -12,7 +12,8 @@ public:
     void SetDataLineSize(const int dataLineSize);
     void SetPacketIndex(const int packetIndex);
     void SetInteractiveMode(const bool setting);
-    void SetOmitPcapHeader(const bool setting);
+    void SetOmitHeadersFlag(const bool setting);
+    void SetRawDataMode(const bool setting);
 
     // Getters
     const std::string& GetPcapPath() const;
@@ -20,7 +21,8 @@ public:
     bool GetPacketIndexSetFlag() const;
     int GetPacketIndex() const;
     bool GetInteractiveModeFlag() const;
-    bool GetOmitHeaderFlag() const;
+    bool GetOmitHeadersFlag() const;
+    bool GetRawDataModeFlag() const;
 
 private:
     std::string m_PcapPath;
@@ -32,5 +34,7 @@ private:
 
     bool m_InteractiveMode;
     
-    bool m_OmitPcapHeader;
+    bool m_OmitHeadersFlag;
+
+    bool m_RawDataMode;
 };

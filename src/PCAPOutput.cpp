@@ -182,6 +182,9 @@ void PCAPOutput::InteractiveMode() const
         this->PrintPcapHeader();
         this->PrintPacket();
 
+        cout << "\nPress 'N' to go to the next packet, 'B' to go to the previous packet, "
+            "or 'Q' to quit the program.\n";
+
         c = getch();
         switch (c)
         {

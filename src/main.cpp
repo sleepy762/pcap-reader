@@ -1,8 +1,8 @@
 #include "PCAP.h"
 #include "PCAPOutput.h"
 #include "ProgramOpts.h"
-#include <iostream>
 #include <unistd.h>
+#include <fmt/format.h>
 
 ProgramOpts ParseProgramOptions(int argc, char** argv);
 void PrintAvailableFlags();
@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        fmt::print(stderr, "{}\n", e.what());
         return 1;
     }
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        fmt::print(stderr, "{}\n", e.what());
     }
 
     return 0;
@@ -45,6 +45,8 @@ ProgramOpts ParseProgramOptions(int argc, char** argv)
 {
     ProgramOpts opts;
     int opt;
+
+    std::string err;
     while ((opt = getopt(argc, argv, "f:d:n:ihr")) != -1)
     {
         switch (opt)
@@ -60,7 +62,7 @@ ProgramOpts ParseProgramOptions(int argc, char** argv)
                 }
                 catch(const std::exception& e)
                 {
-                    std::cerr << *argv << ": Invalid -d argument: " << e.what() << '\n';
+                    fmt::print(stderr, "{}: Invalid -d argument: {}\n", *argv, e.what());
                 }
                 break;
 
@@ -71,7 +73,7 @@ ProgramOpts ParseProgramOptions(int argc, char** argv)
                 }
                 catch(const std::exception& e)
                 {
-                    std::cerr << *argv << ": Invalid -n argument: " << e.what() << '\n';
+                    fmt::print(stderr, "{}: Invalid -n argument: {}\n", *argv, e.what());
                 }
                 break;
 
@@ -96,13 +98,14 @@ ProgramOpts ParseProgramOptions(int argc, char** argv)
 
 void PrintAvailableFlags()
 {
-    std::cout << "Required flags:\n\t";
-    std::cout << "-f <pcap> -- Specify the path to a pcap file to read.\n";
+    fmt::print(
+        "Required flags:\n\t"
+        "-f <pcap> -- Specify the path to a pcap file to read.\n"
 
-    std::cout << "Optional flags:\n\t";
-    std::cout << "-d <size> -- Sets the size of the rows when printing packet data.\n\t";
-    std::cout << "-n <index> -- Start from/print a specific packet at the given index.\n\t";
-    std::cout << "-i -- Open the reader in interactive mode.\n\t";
-    std::cout << "-h -- Don't print the pcap and packet headers.\n\t";
-    std::cout << "-r -- Print packet data in raw format.\n";
+        "Optional flags:\n\t"
+        "-d <size> -- Sets the size of the rows when printing packet data.\n\t"
+        "-n <index> -- Start from/print a specific packet at the given index.\n\t"
+        "-i -- Open the reader in interactive mode.\n\t"
+        "-h -- Don't print the pcap and packet headers.\n\t"
+        "-r -- Print packet data in raw format.\n");
 }

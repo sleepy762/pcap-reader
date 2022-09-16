@@ -1,17 +1,15 @@
 #include "PCAPOutput.h"
-#include <iostream>
 #include <stdexcept>
-#include <iomanip>
 #include <cctype>
 #include "getch.h"
+#include <iostream>
+#include <fmt/format.h>
 
 #define INTERACTIVE_QUIT_KEY ('q')
 #define INTERACTIVE_FORWARD_KEY ('n')
 #define INTERACTIVE_BACKWARD_KEY ('b')
 
 #define CLEAR_SCREEN ("\033[2J\033[1;1H")
-
-using std::cout;
 
 PCAPOutput::PCAPOutput(const PCAP& pcap, ProgramOpts& opts)
     : m_PCAP(pcap), m_Opts(opts),
@@ -29,15 +27,22 @@ void PCAPOutput::PrintPcapHeader() const
         return;
     }
 
-    cout << "== PCAP HEADER ==\n";
-    cout << "PCAP path: " << this->m_PCAP.GetPcapFilePath() << '\n';
-    cout << "Magic: 0x" << std::hex << this->m_PCAP.GetMagic() << std::dec << '\n';
-    cout << "PCAP format version: " << this->m_PCAP.GetMajorVersion() << '.' 
-        << this->m_PCAP.GetMinorVersion()<< '\n';
-    cout << "Snap len: " << this->m_PCAP.GetSnapLen() << '\n';
-    cout << "Link type: " << this->m_PCAP.GetLinkType() << '\n';
-    cout << "FCS: " << (int)this->m_PCAP.GetFCS() << '\n';
-    cout << "Packets number: " << this->m_PCAP.GetPackets().size() << "\n\n";
+    fmt::print(
+        "== PCAP HEADER ==\n"
+        "PCAP path: {}\n"
+        "Magic: {:#x}\n"
+        "PCAP format version: {}.{}\n"
+        "Snap length: {}\n"
+        "Link type: {}\n"
+        "FCS: {}\n"
+        "Amount of packets: {}\n\n",
+        this->m_PCAP.GetPcapFilePath(),
+        this->m_PCAP.GetMagic(),
+        this->m_PCAP.GetMajorVersion(), this->m_PCAP.GetMinorVersion(),
+        this->m_PCAP.GetSnapLen(),
+        this->m_PCAP.GetLinkType(),
+        (int)this->m_PCAP.GetFCS(),
+        this->m_PCAP.GetPackets().size());
 }
 
 void PCAPOutput::PrintPacketHeader(const Packet& packet, const unsigned int index) const
@@ -59,18 +64,18 @@ void PCAPOutput::PrintPacketHeader(const Packet& packet, const unsigned int inde
         }
     }
 
-    cout << "== Packet " << index << " ==\n";
+    fmt::print("== Packet {} ==\n", index);
 
     // Print the correct time, according to the pcap magic
     int32_t paddingWidth = (pcapMagic == MICROSECONDS_MAGIC) ? 6 : 9;
-    cout << "Unix timestamp: " << packet.GetTimestampSeconds() << '.'
-        << std::setfill('0') << std::setw(paddingWidth) << packet.GetTimestampFractions() << '\n';
+    fmt::print("Unix timestamp: {}.{:0{}}\n", packet.GetTimestampSeconds(), 
+        packet.GetTimestampFractions(), paddingWidth);
 
-    cout << "Relative timestamp: " << relativeSeconds << '.' 
-        << std::setfill('0') << std::setw(paddingWidth) << relativeFractions << '\n';
+    fmt::print("Relative timestamp: {}.{:0{}}\n", relativeSeconds, 
+        relativeFractions, paddingWidth);
 
-    cout << "Captured packet size: " << packet.GetCapturedLen() << '\n';
-    cout << "Original packet size: " << packet.GetOriginalLen() << '\n';
+    fmt::print("Captured packet size: {}\n", packet.GetCapturedLen());
+    fmt::print("Original packet size: {}\n", packet.GetOriginalLen());
 }
 
 void PCAPOutput::PrintPacket() const
@@ -78,7 +83,7 @@ void PCAPOutput::PrintPacket() const
     unsigned int index = 0;
     if (!this->m_Opts.GetPacketIndexSetFlag() && !this->m_Opts.GetInteractiveModeFlag())
     {
-        cout << "Specify a packet to print with the -n flag, or open in interactive mode with -i.\n";
+        fmt::print("Specify a packet to print with the -n flag, or open in interactive mode with -i.\n");
         return;
     }
     else
@@ -111,12 +116,13 @@ void PCAPOutput::PrintPacket() const
 
 void PCAPOutput::PrintPacketDataRaw(const Packet& packet) const
 {
+    std::string dataStr = "";
     auto data = packet.GetData();
     for (size_t i = 0; i < data.size(); i++)
     {
-        std::cout << data[i];
+        dataStr += data[i];
     }
-    std::cout << std::endl;
+    std::cout << dataStr;
 }
 
 void PCAPOutput::PrintPacketDataFormatted(const Packet& packet) const
@@ -127,13 +133,13 @@ void PCAPOutput::PrintPacketDataFormatted(const Packet& packet) const
         throw std::runtime_error("Data line size is less than 1.");
     }
 
-    cout << "Packet data:\n";
+    fmt::print("Packet data:\n");
 
     auto data = packet.GetData();
     for (uint32_t i = 0; i < data.size(); i += dataLineSize)
     {
         std::string printableData = "";
-        cout << std::setfill('0') << std::setw(4) << std::hex << i << ": ";
+        fmt::print("{:#06x}: ", i); // Print offset
         for (uint8_t j = 0; j < dataLineSize; j++)
         {
             // Avoid going out of bounds
@@ -142,18 +148,18 @@ void PCAPOutput::PrintPacketDataFormatted(const Packet& packet) const
                 // Add padding if the last line is shorter
                 for (uint8_t k = 0; k < dataLineSize - j; k++)
                 {
-                    cout << "   ";
+                    fmt::print("   ");
                 }
                 break;
             }
 
             int c = data[i + j]; // Read a byte from the data and store in int to print the byte in hex
-            cout << std::setfill('0') << std::setw(2) << c << ' '; // Output in hex
+            fmt::print("{:02x} ", c); // Output in hex
 
             // Save ASCII character, if it's printable
             printableData += std::isprint(c) ? c : '.';
         }
-        cout << std::dec << '|' << printableData << "|\n";
+        fmt::print("|{}|\n", printableData);
     }
 }
 
@@ -178,12 +184,12 @@ void PCAPOutput::InteractiveMode() const
     {
         int currentIndex = this->m_Opts.GetPacketIndex();
 
-        cout << CLEAR_SCREEN;
+        fmt::print(CLEAR_SCREEN);
         this->PrintPcapHeader();
         this->PrintPacket();
 
-        cout << "\nPress 'N' to go to the next packet, 'B' to go to the previous packet, "
-            "or 'Q' to quit the program.\n";
+        fmt::print("\nPress 'N' to go to the next packet, 'B' to go to the previous packet, "
+            "or 'Q' to quit the program.\n");
 
         c = getch();
         switch (c)

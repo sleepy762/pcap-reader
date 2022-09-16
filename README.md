@@ -4,6 +4,8 @@ Just a simple pcap reader for the terminal.
 
 # Building
 
+Dependency: `libfmt`
+
 Run the following commands in the root directory of the project.
 
 ```

@@ -3,7 +3,7 @@
 #include <cctype>
 #include "getch.h"
 #include <iostream>
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #define INTERACTIVE_QUIT_KEY ('q')
 #define INTERACTIVE_FORWARD_KEY ('n')

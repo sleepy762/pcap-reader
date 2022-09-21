@@ -2,7 +2,7 @@
 #include "PCAPOutput.h"
 #include "ProgramOpts.h"
 #include <unistd.h>
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 ProgramOpts ParseProgramOptions(int argc, char** argv);
 void PrintAvailableFlags();
